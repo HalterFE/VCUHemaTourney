@@ -1,4 +1,3 @@
-import java.util.Scanner; //Just for use before UI is made
 /*import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;*/
@@ -12,45 +11,54 @@ public class ServerApp extends Thread{
     private ObjectOutputStream objOutput;
     private int clientNum = 0;
 
+
     public static void main(String[] args) {
         new ServerApp();
     }
     public ServerApp(){
-        int numFighters = 0, numRounds = 0, numFights = 0, currPool = 0, numDualElimFighters = 0;
+        int numFighters = 0, numRounds = 0, numFights = 0, currPool = 0, numDualElimFighters = 0, numRoundsDE = 0;
+        String fileDirectory;
         ArrayList<Fighter> fighterList = new ArrayList<>();
 
-        Scanner scan = new Scanner(System.in);
-        System.out.println("How many pools are there");
-        final int numPools = scan.nextInt();
-        System.out.println("How many rounds per bout?");
-        numRounds = scan.nextInt();
-        System.out.println("How many fights in the round robin section?");
-        numFights = scan.nextInt();
-        System.out.println("How many fighters in the dual elimination section?");
-        numDualElimFighters = scan.nextInt();
-        //This stuff is only for b4 the UI is made
+        MyFrame frame = new MyFrame();
 
+        while(!frame.getStartMenuDone()){
+            System.out.print("");
+        }
+        //Waits for the user to input all the data
 
-        fighterList = FighterFile(numFights);
-        Pool[] pools = LoadPools(fighterList, numRounds, numPools, fighterList.size());
-        //makes a list of fighters and puts them in a pool
+        try{
+            final int numPools = Integer.parseInt(frame.poolNumText.getText());
+            numFights = Integer.parseInt(frame.RRRoundNumText.getText());
+            numRounds =  Integer.parseInt(frame.RRBoutNumText.getText());
+            numRoundsDE = Integer.parseInt(frame.DEBoutNumText.getText());
+            numDualElimFighters = Integer.parseInt(frame.DEFighterNumText.getText());
+            fileDirectory = frame.selectedFilePathLabel.getText();
 
-        try {
-            server = new ServerSocket(0104);
-            while(true) Connect(pools, numPools, numDualElimFighters
-            );
+            fighterList = FighterFile(numFights, fileDirectory);
+            Pool[] pools = LoadPools(fighterList, numRounds, numPools, fighterList.size());
+            frame.numBattles = 2*numDualElimFighters-3;
+            frame.battleProgressLabel.setText(frame.numCompletedBattles + "/" + frame.numBattles);
+            //makes a list of fighters and puts them in a pool
+            try {
+                server = new ServerSocket(0104);
+                while(true) Connect(pools, numPools, numDualElimFighters, numRoundsDE, frame);
             //sends one pool at a time to the client application til all the round robin matches are done
         }
         catch(IOException e){
             e.printStackTrace();
         }
+        }
+        catch(NumberFormatException e){
+            e.printStackTrace();
+        }
 
     }
 
-    public ArrayList<Fighter> FighterFile(int numFights){
+    public ArrayList<Fighter> FighterFile(int numFights, String fileDirectory){
         ArrayList<Fighter> fighterList = new ArrayList<>();
         try {
-            BufferedReader read = new BufferedReader(new FileReader("TestFighters.txt"));
+            BufferedReader read = new BufferedReader(new FileReader(fileDirectory));
             String line;
             while((line = read.readLine()) != null) {
                 fighterList.add(new Fighter(line, 0, numFights, 0));
@@ -105,7 +113,7 @@ public class ServerApp extends Thread{
     }
     //Takes the list of fighters and puts them in their respective pools
 
-    public void Connect(Pool[] pools, int numPools, int numDualElimFighters) throws IOException{
+    public void Connect(Pool[] pools, int numPools, int numDualElimFighters, int numRoundsDE, MyFrame frame) throws IOException{
         try{
             Socket sock = server.accept();
 
@@ -115,9 +123,9 @@ public class ServerApp extends Thread{
                     ConnectedClient client = new ConnectedClient(sock, clientNum);
                     try {
                         System.out.println("STARTING RR");
-                        client.roundRobin(pools, numPools, numDualElimFighters, sock);
+                        client.roundRobin(pools, numPools, numDualElimFighters, sock, numRoundsDE, frame);
                         System.out.println("DONE WITH RR");
-                        client.roundRobin(pools, numPools, numDualElimFighters, sock);
+                        client.roundRobin(pools, numPools, numDualElimFighters, sock, numRoundsDE, frame);
                         System.out.println("DONE");
                         //close();
                         //runs it once for RR and again for DE, the connected client uses the runStatus to determine RR or DE
@@ -129,7 +137,6 @@ public class ServerApp extends Thread{
                 }).start();
             }
 
-            //RoundRobin(pools, numPools, sock);
             //close();
         }
         catch(IOException e){
@@ -137,27 +144,6 @@ public class ServerApp extends Thread{
         }
     }
     //creates a socket that the client can connect to before triggering the tourney phases
-
-    /*public void RoundRobin(Pool[] pools, int numPools, Socket sock) throws IOException{
-        int completedRRs = 0;
-        while (completedRRs < numPools) {
-
-                int tempRR;
-                objOutput = new ObjectOutputStream(sock.getOutputStream());
-                objInput = new ObjectInputStream(sock.getInputStream());
-                tempRR = completedRRs;
-                objOutput.writeObject(pools[tempRR]);
-                System.out.println("Client _ is handling pool number: " + (tempRR + 1));
-                try {
-                    Pool blablabla = (Pool) objInput.readObject();
-                    completedRRs++;
-                    System.out.println("Client _ is done with pool number:");
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-        }
-    }*/
-
 
     public void close() throws IOException{
         server.close();
