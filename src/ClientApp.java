@@ -9,13 +9,21 @@ public class ClientApp{
     private DataOutputStream dataOut;
     private ObjectOutputStream objOut;
     private ObjectInputStream objIn;
+    private String IPAddress;
     //Server Stuff
 
+    private MyFrame frameC;
     private HashMap<String, Integer> setFights;
 
     public ClientApp(){
+        frameC = new MyFrame(0);
         try{
-            this.socket = new Socket("127.0.0.1", 0104);
+            while(!frameC.getStartMenuDoneC()){
+                System.out.print("");
+            }
+            IPAddress = frameC.IPText.getText();
+
+            this.socket = new Socket(IPAddress, 0104);
             this.objOut = new ObjectOutputStream(socket.getOutputStream());
             this.objIn = new ObjectInputStream(socket.getInputStream());
             this.dataIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -27,10 +35,12 @@ public class ClientApp{
             DoubleElimMatch RRBinary = (DoubleElimMatch) objIn.readObject();
             objOut.writeObject(new Fighter("DUMMY", 0, 0, 0));
             if (RRBinary.getFight1().getPoints() == -5) {
+                frameC.screen.show(frameC.parentPanel,"ContinueC");
                 roundRobin();
                 doubleTourney(RRBinary);
             }
             else{
+                frameC.screen.show(frameC.parentPanel,"ContinueC");
                 doubleTourney(RRBinary);
             }
             //The first option is for if a client joins during the RR Portion
@@ -46,8 +56,15 @@ public class ClientApp{
 
     public void doubleTourney(DoubleElimMatch introMatch){
         DoubleElimMatch currMatch;
+
+        frameC.redDeck.setText(" ");
+        frameC.blueDeck.setText(" ");
+        frameC.matchOrPoolHeader.setText("Dual Elim Match");
+        frameC.onDeck.setText(" ");
+        //Removes the info about next fighters since it is impossible to know for dual elim stuff
+
         try {
-            if (introMatch == new DoubleElimMatch(new Fighter("bugaboo", -5, -5, -5), new Fighter("bugaboo", -5, -5, -5))) {
+            if (introMatch.getFight1().getPoints() == -5) {
                 currMatch = (DoubleElimMatch) objIn.readObject();
             } else {
                 currMatch = introMatch;
@@ -55,8 +72,37 @@ public class ClientApp{
             //handles the cases where the code continues immediately after the Round Robin and after DE has started respectively
 
             while (true) {
-                currMatch.setWinner(currMatch.getFight1());
-                //THIS IS DUMMY CODE, SET THINGS TO ACTUALLY RUN THE MATCH WHEN THE FRONT END IS DONE
+                frameC.RED.setText(currMatch.getFight1().getName());
+                frameC.BLUE.setText(currMatch.getFight2().getName());
+                frameC.REDCONFIRM.setText(currMatch.getFight1().getName());
+                frameC.BLUECONFIRM.setText(currMatch.getFight2().getName());
+                //sets the current match details on top of the screen
+
+                frameC.screen.show(frameC.parentPanel,"FightC");
+
+                int currRound = -1;
+                while(currRound <= currMatch.getRounds()){
+                    currRound = frameC.getCurrRound();
+                    System.out.print("");
+                }
+
+                frameC.screen.show(frameC.parentPanel,"FightConfirmC");
+                while(!frameC.currPoolDoneC){
+                    System.out.print("");
+                }
+                //waits for user to decide if final scores are correct
+
+                if(frameC.getNewRedPointTotal() > frameC.getNewBluePointTotal()){
+                    currMatch.setWinner(currMatch.getFight1());
+                }
+                else{
+                    currMatch.setWinner(currMatch.getFight2());
+                }
+
+                frameC.currPoolDoneC = false;
+                //allows this code to be used for future matches
+
+                frameC.screen.show(frameC.parentPanel,"ContinueC");
                 objOut.writeObject(currMatch);
                 currMatch = (DoubleElimMatch) objIn.readObject();
             }
@@ -83,6 +129,9 @@ public class ClientApp{
 
                         objOut.writeObject(currPool);
                         //sends data after the round robin match is done for this pool
+
+                        frameC.screen.show(frameC.parentPanel,"ContinueC");
+                        //shows the user that the client is waiting for a new pool or dual elim spar
 
                         obj = objIn.readObject();
                         currPool = (Pool) obj;
@@ -177,9 +226,12 @@ public class ClientApp{
     public Pool runRR(Pool currPool){
         ArrayList<Fighter> fighterList = currPool.getFighterList();
         Fighter Red, Blue;
-        String fullLine="";
+        String fullLine="", nextLine = "";
         String ENDSTRING = "*--------------------**--------------------*";
-        String[] splitString;
+        String[] splitString, splitNextString;
+
+        frameC.matchOrPoolHeader.setText("Pool Number: "+currPool.getNumber());
+
         try {
             BufferedReader reader = new BufferedReader(new FileReader("Pool.txt"));
 
@@ -189,13 +241,27 @@ public class ClientApp{
             //skips the lines in the generated file that are not the actual matches
 
             fullLine = reader.readLine();
+            nextLine = reader.readLine();
             while(!fullLine.equals(ENDSTRING)){
                 splitString = fullLine.split("   \\|\\|   ");
+
+                if(nextLine.equals(ENDSTRING)){
+                    frameC.redDeck.setText("End of Pool");
+                    frameC.blueDeck.setText("End of Pool");
+                }
+                else{
+                    splitNextString = nextLine.split("   \\|\\|   ");
+                    frameC.redDeck.setText(splitNextString[0]);
+                    frameC.blueDeck.setText(splitNextString[1]);
+                }
+                //Allows the front end to show the next match in the pool
+
                 Red = inFighter(fighterList, splitString[0]);
                 Blue = inFighter(fighterList, splitString[1]);
-                System.out.println(Red+"\n"+Blue);
+
                 fighterList = fightRR(Red,Blue,currPool, fighterList);
-                fullLine = reader.readLine();
+                fullLine = nextLine;
+                nextLine = reader.readLine();
             }
 
             currPool.setFighterList(fighterList);
@@ -212,11 +278,39 @@ public class ClientApp{
         int redTotal = 0;
         int blueTotal = 0;
 
-        for(int i = 0; i<currPool.getRounds();i++) {
+        frameC.RED.setText(RED.getName());
+        frameC.BLUE.setText(BLUE.getName());
+        frameC.REDCONFIRM.setText(RED.getName());
+        frameC.BLUECONFIRM.setText(BLUE.getName());
+        //sets the current pool details on top of the screen
+
+        frameC.screen.show(frameC.parentPanel,"FightC");
+
+        int currRound = -1;
+        while(currRound <= currPool.getRounds()){
+            currRound = frameC.getCurrRound();
+            System.out.print("");
+        }
+        //the user goes through all the rounds on the front end until all the matches have been completed
+
+        /*for(int i = 0; i<currPool.getRounds();i++) {
             //REPLACE THIS LATER WITH CODE THAT ACTUALLY ASKS USER WHO GETS WHAT POINTS AND WHAT THEY GET
             redTotal++;
             System.out.println("RED WINS A POINT");
+        }*/
+
+        frameC.screen.show(frameC.parentPanel,"FightConfirmC");
+        while(!frameC.currPoolDoneC){
+            System.out.print("");
         }
+        //waits for user to decide if final scores are correct
+
+        redTotal = frameC.getNewRedPointTotal();
+        blueTotal = frameC.getNewBluePointTotal();
+
+        frameC.currPoolDoneC = false;
+        //allows this code to be used for future pools/dual elims
+
         RED.setPoints((RED.getPoints()+redTotal));
         BLUE.setPoints(BLUE.getPoints()+blueTotal);
         replaceFighter(fighterList, RED);

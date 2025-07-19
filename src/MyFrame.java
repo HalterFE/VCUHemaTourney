@@ -25,10 +25,13 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
     public int numPools, numCompletedPools, numTiebreak, numCurrSelectedTiebreak, numBattles, numCompletedBattles;
     public JTextArea RRConsole, DEConsole;
     public JLabel poolProgressLabel, currSelectLabel, battleLabel, battleProgressLabel, finalWinner;
+    public JScrollPane continueScrollPane;
 
-    private int redPointTotal, bluePointTotal, currRound; //clientside running of pools and matches
-    public JLabel matchOrPoolHeader, roundLabel, redDeck, blueDeck, redPointTotalLabel, bluePointTotalLabel;
+    private int redPointTotal, bluePointTotal, currRound, newRedPointTotal, newBluePointTotal; //clientside running of pools and matches
+    public JLabel matchOrPoolHeader, roundLabel, redDeck, blueDeck, redPointTotalLabel, bluePointTotalLabel, redPointTotalLabelConfirm, bluePointTotalLabelConfirm, RED, BLUE, REDCONFIRM, BLUECONFIRM, onDeck;
     private JTextField redPoints, bluePoints, redChange, blueChange;
+    public boolean currPoolDoneC;
+    public JPanel FightC, FightConfirmC;
 
     public MyFrame(int state) {
         border = BorderFactory.createLineBorder(Color.yellow, 4);
@@ -36,6 +39,7 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         this.StartMenuDone = false;
         this.StartDualElim = false;
         this.StartMenuDoneC = false;
+        this.currPoolDoneC = false;
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         screen = new CardLayout();
@@ -69,16 +73,16 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
             this.setTitle("HEMA Tourney CLIENT");
             this.setIconImage(logo.getImage());
             JPanel StartC = makeStartScreenClient();
-            JPanel FightC = makeFightScreenClient();
-            JPanel FightConfirmC = makeFightScreenConfirmClient();
+            FightC = makeFightScreenClient();
+            FightConfirmC = makeFightScreenConfirmClient();
             JPanel ContinueC = makeContinueClient();
             JPanel FinalC = makeFinalClient();
 
-            parentPanel.add(StartC);
-            parentPanel.add(FightC);
-            parentPanel.add(FightConfirmC);
-            parentPanel.add(ContinueC);
-            parentPanel.add(FinalC);
+            parentPanel.add(StartC, "StartC");
+            parentPanel.add(FightC, "FightC");
+            parentPanel.add(FightConfirmC, "FightConfirmC");
+            parentPanel.add(ContinueC, "ContinueC");
+            parentPanel.add(FinalC, "FinalC");
 
             this.add(parentPanel);
             this.setVisible(true);
@@ -131,8 +135,8 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         //if both redPoints and bluePoints have a point value
         if(source==redChange||source==blueChange){
             try{
-                Integer.parseInt(redChange.getText());
-                Integer.parseInt(blueChange.getText());
+                newRedPointTotal = Integer.parseInt(redChange.getText());
+                newBluePointTotal = Integer.parseInt(blueChange.getText());
                 submitFightButtonC.setEnabled(true);
             }
             catch (NumberFormatException f) {
@@ -172,8 +176,8 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         //if the ip address is a number
         if(source==redPoints||source==bluePoints){
             try{
-                Integer.parseInt(redPoints.getText());
-                Integer.parseInt(bluePoints.getText());
+                newRedPointTotal = Integer.parseInt(redChange.getText());
+                newBluePointTotal = Integer.parseInt(blueChange.getText());
                 nextFightButtonC.setEnabled(true);
             }
             catch (NumberFormatException f) {
@@ -211,8 +215,8 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         //if the ip address is a number
         if(source==redPoints||source==bluePoints){
             try{
-                Integer.parseInt(redPoints.getText());
-                Integer.parseInt(bluePoints.getText());
+                newRedPointTotal = Integer.parseInt(redChange.getText());
+                newBluePointTotal = Integer.parseInt(blueChange.getText());
                 nextFightButtonC.setEnabled(true);
             }
             catch (NumberFormatException f) {
@@ -239,9 +243,13 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
             try {
                 bluePointTotal = bluePointTotal + Integer.parseInt(bluePoints.getText());
                 redPointTotal = redPointTotal + Integer.parseInt(redPoints.getText());
+                newRedPointTotal = redPointTotal;
+                newBluePointTotal = bluePointTotal;
                 currRound++;
                 redPointTotalLabel.setText("Total: "+redPointTotal);
                 bluePointTotalLabel.setText("Total: "+bluePointTotal);
+                redPointTotalLabelConfirm.setText("Total: "+redPointTotal);
+                bluePointTotalLabelConfirm.setText("Total: "+bluePointTotal);
                 roundLabel.setText("Round: "+currRound);
                 /*
                     If the current round exceeds the number of rounds per spar, go to the confirmation screen
@@ -252,10 +260,15 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
             }
         }
         if(e.getSource()== submitFightButtonC){
-            /*
-                submit the values for the red and blue point totals as the finalized ones. The defaults are already
-                set to the value entered before.
-             */
+            redPointTotal = 0;
+            bluePointTotal = 0;
+            redPointTotalLabel.setText("Total: "+redPointTotal);
+            bluePointTotalLabel.setText("Total: "+bluePointTotal);
+            redPointTotalLabelConfirm.setText("Total: "+redPointTotal);
+            bluePointTotalLabelConfirm.setText("Total: "+bluePointTotal);
+            this.currRound = 1;
+            roundLabel.setText("Round: "+currRound);
+            currPoolDoneC = true;
         }
         if (e.getSource() == startDualElimButton) {
             this.StartDualElim = true;
@@ -310,6 +323,9 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
     public void setNumCompletedPools(int i) {
         this.numCompletedPools = i;
     }
+    public int getNewRedPointTotal(){ return newRedPointTotal;}
+    public int getNewBluePointTotal(){ return newBluePointTotal;}
+    public int getCurrRound(){ return currRound;}
     //Miscellaneous getters and setters
 
     public void increaseNumCurrSelectedTiebreak(){
@@ -490,6 +506,7 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
     //returns a JPanel that serves as the screen for running round robins for the server
 
     public JPanel makeFightScreenClient(){
+        currRound = 1;
         JPanel FightScreenC = new JPanel();
         FightScreenC.setBounds(0, 0, 586, 412);
         FightScreenC.setBorder(border);
@@ -505,8 +522,8 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         //label at the top of the screen
         //the text can change later once the pool stuff is done
 
-        JLabel RED = new JLabel("REDrrrrrrrrrrrrr");
-        JLabel BLUE = new JLabel("BLUEbbbbbbbbbbbb");
+        RED = new JLabel("REDrrrrrrrrrrrrr");
+        BLUE = new JLabel("BLUEbbbbbbbbbbbb");
         JLabel VS = new JLabel("VS.");
         RED.setFont(new Font("JetBrains Mono", Font.BOLD, 30));
         BLUE.setFont(new Font("JetBrains Mono", Font.BOLD, 30));
@@ -572,7 +589,7 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         FightScreenC.add(nextFightButtonC);
         //button to go to the next round
 
-        JLabel onDeck = new JLabel("<html><body>On Deck<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VS:</body></html>");
+        onDeck = new JLabel("<html><body>On Deck<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VS:</body></html>");
         onDeck.setFont(new Font("JetBrains Mono", Font.BOLD, 15));
         onDeck.setForeground(Color.white);
         onDeck.setBounds(262, 335, 70, 40);
@@ -604,27 +621,33 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         //label at the top of the screen
         //the text can change later once the pool stuff is done
 
-        JLabel RED = new JLabel("REDrrrrrrrrrrrrr");
-        JLabel BLUE = new JLabel("BLUEbbbbbbbbbbbb");
         JLabel CORRECT = new JLabel("<html><body>&nbsp;&nbsp;&nbsp;IS THIS<br/>CORRECT?</body></html>");
-        RED.setFont(new Font("JetBrains Mono", Font.BOLD, 30));
-        BLUE.setFont(new Font("JetBrains Mono", Font.BOLD, 30));
+        REDCONFIRM = new JLabel("REDrrrrrrrrrrrrr");
+        BLUECONFIRM = new JLabel("BLUEbbbbbbbbbbbb");
+        REDCONFIRM.setFont(new Font("JetBrains Mono", Font.BOLD, 30));
+        BLUECONFIRM.setFont(new Font("JetBrains Mono", Font.BOLD, 30));
         CORRECT.setFont(new Font("JetBrains Mono", Font.BOLD, 20));
-        RED.setForeground(Color.red);
-        BLUE.setForeground(Color.blue);
+        REDCONFIRM.setForeground(Color.red);
+        BLUECONFIRM.setForeground(Color.blue);
         CORRECT.setForeground(Color.white);
-        RED.setBounds(20, 75, 200, 80);
-        BLUE.setBounds(359, 75, 200, 80);
+        REDCONFIRM.setBounds(20, 75, 200, 80);
+        BLUECONFIRM.setBounds(359, 75, 200, 80);
         CORRECT.setBounds(235, 75, 128, 80);
-        FightScreenConfirmC.add(RED);
-        FightScreenConfirmC.add(BLUE);
+        FightScreenConfirmC.add(REDCONFIRM);
+        FightScreenConfirmC.add(BLUECONFIRM);
         FightScreenConfirmC.add(CORRECT);
         //RED vs BLUE labels
 
-        redPointTotalLabel.setBounds(56, 205, 82, 20);
-        bluePointTotalLabel.setBounds(452, 205, 82, 20);
-        FightScreenConfirmC.add(redPointTotalLabel);
-        FightScreenConfirmC.add(bluePointTotalLabel);
+        redPointTotalLabelConfirm = new JLabel("Total: "+redPointTotal);
+        bluePointTotalLabelConfirm = new JLabel("Total: "+bluePointTotal);
+        redPointTotalLabelConfirm.setBounds(56, 205, 122, 20);
+        bluePointTotalLabelConfirm.setBounds(452, 205, 122, 20);
+        redPointTotalLabelConfirm.setFont(new Font("JetBrains Mono", Font.BOLD, 25));
+        bluePointTotalLabelConfirm.setFont(new Font("JetBrains Mono", Font.BOLD, 25));
+        redPointTotalLabelConfirm.setForeground(Color.white);
+        bluePointTotalLabelConfirm.setForeground(Color.white);
+        FightScreenConfirmC.add(redPointTotalLabelConfirm);
+        FightScreenConfirmC.add(bluePointTotalLabelConfirm);
         //lists the total number of points earned by each fighter
 
         submitFightButtonC= new JButton("Confirm");
@@ -824,6 +847,10 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         tiebreakPanel.setLayout(new BoxLayout(tiebreakPanel, BoxLayout.Y_AXIS));
         tiebreakPanel.setBounds(295,10,281,392);
         tiebreakPanel.setBorder(border);
+        continueScrollPane = new JScrollPane(tiebreakPanel, continueScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, continueScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        continueScrollPane.setBackground(Color.black);
+        continueScrollPane.setBounds(295,10,281,392);
+        continueScrollPane.setBorder(border);
         //The Panel that will display who is up for tiebreaker
 
         startDualElimButton = new JButton("Continue");
@@ -843,7 +870,7 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
 
         ContinueS.add(selectLabel);
         ContinueS.add(currSelectLabel);
-        ContinueS.add(tiebreakPanel);
+        ContinueS.add(continueScrollPane);
         ContinueS.add(startDualElimButton);
         ContinueS.revalidate();
         ContinueS.repaint();

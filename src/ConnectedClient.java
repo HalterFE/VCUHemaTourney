@@ -45,7 +45,7 @@ public class ConnectedClient{
             frame.screen.next(frame.parentPanel);
             tempCompletedFighters = new ArrayList<Fighter>();
             completedFighters = new ArrayList<Fighter>();
-            objOutput.writeObject(new DoubleElimMatch(new Fighter("bugaboo",-5,-5,-5), new Fighter("bugaboo",-5,-5,-5)));
+            objOutput.writeObject(new DoubleElimMatch(new Fighter("bugaboo", -5, -5, -5), new Fighter("bugaboo", -5, -5, -5), -1));
             try {
                 Fighter DUMMY = (Fighter) objInput.readObject(); //Just to confirm that the client got the data before progressing
             }
@@ -59,6 +59,7 @@ public class ConnectedClient{
                 //objInput = new ObjectInputStream(sock.getInputStream());
                 tempRR = completedRRs;
                 frame.setNumCompletedPools(completedRRs);
+                frame.numPools = numPools;
                 pools[tempRR].setStatus(1);
                 objOutput.writeObject(pools[tempRR]);
                 frame.RRConsole.append("Client "+clientNum+":> Handling pool number: "+ (pools[tempRR].getNumber())+"\n\n");
@@ -69,6 +70,7 @@ public class ConnectedClient{
                     pools[tempRR].setStatus(2);
                     frame.RRConsole.append("Client "+clientNum+":> Done with pool number: "+ (pools[tempRR].getNumber())+"\n\n");
                     completedRRs++;
+                    frame.numCompletedPools++;
                     frame.poolProgressLabel.setText(frame.numCompletedPools + "/" + frame.numPools);
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
@@ -111,7 +113,7 @@ public class ConnectedClient{
             }
             //determines how many people need to have another match before DE can continue
 
-            frame.setNumTiebreak(numOfLastPlacePeople - numOfLastPlaceBeforeCutoff);
+            frame.setNumTiebreak(numOfLastPlaceBeforeCutoff);
 
             int cutoffSwitch = -1;
             if(numOfLastPlacePeople - numOfLastPlaceBeforeCutoff != 0){
@@ -234,7 +236,7 @@ public class ConnectedClient{
         }
         else{
             ArrayList<Fighter> returner = new ArrayList<Fighter>(completedFighters.subList(0, numDualElimFighters));
-            StartDoubleElim(returner, frame);
+            StartDoubleElim(returner, frame, numRoundsDE);
             //sends all fighters over that made it to elims
         }
         //LATER FIX, KEEP DATA FROM BEFORE DISCONNECT
@@ -242,39 +244,39 @@ public class ConnectedClient{
     }
     //the server-side aspect of the round robin stuff
 
-    public void StartDoubleElim(ArrayList<Fighter> fighterList, MyFrame frame){
+    public void StartDoubleElim(ArrayList<Fighter> fighterList, MyFrame frame, int numRoundsDE){
         tempWinner = new ArrayList<>();
         tempLoser = new ArrayList<>();
-        winnersBracket = InitializeBracket(fighterList);
+        winnersBracket = InitializeBracket(fighterList, numRoundsDE);
         frame.screen.next(frame.parentPanel);
 
         while(winnersBracket.size()>1){
             runWinners(frame);
-            winnersBracket = InitializeBracket(tempWinner);
+            winnersBracket = InitializeBracket(tempWinner, numRoundsDE);
         }
         //runs until the winner's bracket is over
 
-        losersBracket = InitializeBracket(tempLoser);
+        losersBracket = InitializeBracket(tempLoser, numRoundsDE);
 
         while(losersBracket.size()>1){
             runLosers(frame);
-            losersBracket = InitializeBracket(tempLoser);
+            losersBracket = InitializeBracket(tempLoser, numRoundsDE);
         }
         //runs until the loser's bracket is over
 
-        finalMatch(winnersBracket.get(0).getFight1(), losersBracket.get(0).getFight1(),frame);
+        finalMatch(winnersBracket.get(0).getFight1(), losersBracket.get(0).getFight1(),frame,numRoundsDE);
     }
     //Server-side Double Elim Process
 
-    public ArrayList<DoubleElimMatch> InitializeBracket(ArrayList<Fighter> fighterList){
+    public ArrayList<DoubleElimMatch> InitializeBracket(ArrayList<Fighter> fighterList, int numRoundsDE){
         ArrayList<DoubleElimMatch> matchList = new ArrayList<DoubleElimMatch>();
         for(int i = 0; i<fighterList.size();i+=2){
             if(i+1 == fighterList.size()){
-                matchList.add(new DoubleElimMatch(fighterList.get(i),null));
+                matchList.add(new DoubleElimMatch(fighterList.get(i),null, 0));
             }
             //handles cases where the current part of the tournament doesn't have even participants
             else {
-                matchList.add(new DoubleElimMatch(fighterList.get(i), fighterList.get(i + 1)));
+                matchList.add(new DoubleElimMatch(fighterList.get(i), fighterList.get(i + 1), numRoundsDE));
             }
         }
         return matchList;
@@ -342,20 +344,21 @@ public class ConnectedClient{
         }
     } //sends match data to the client to run individual matches, match data sent back is then used, this time losers are OBLITERATED
 
-    public void finalMatch(Fighter fight1, Fighter fight2, MyFrame frame){
+    public void finalMatch(Fighter fight1, Fighter fight2, MyFrame frame, int numRoundsDE){
         frame.battleLabel.setText("Final Match 1:");
         frame.battleProgressLabel.setText(fight1.getName()+" VS"+ fight2.getName());
         Fighter champion;
         try {
-            objOutput.writeObject(new DoubleElimMatch(fight1, fight2));
+            objOutput.writeObject(new DoubleElimMatch(fight1, fight2, numRoundsDE));
             frame.DEConsole.append("Client "+clientNum+":> Handling FM: "+fight1.getName()+" VS "+fight2.getName()+"\n\n");
             champion = ((DoubleElimMatch) objInput.readObject()).getWinner();
             frame.DEConsole.append("Client "+clientNum+":> Done with FM: "+fight1.getName()+" VS "+fight2.getName()+"\n\n");
             if(champion == fight2){
                 frame.battleLabel.setText("Final Match 2:");
-                objOutput.writeObject(new DoubleElimMatch(fight1, fight2));
+                objOutput.writeObject(new DoubleElimMatch(fight1, fight2, numRoundsDE));
                 frame.DEConsole.append("Client "+clientNum+":> Handling FM2: "+fight1.getName()+" VS "+fight2.getName()+"\n\n");
-                champion = ((DoubleElimMatch) objInput.readObject()).getWinner();
+                DoubleElimMatch tempChamp = (DoubleElimMatch) objInput.readObject();
+                champion = tempChamp.getWinner();
                 frame.DEConsole.append("Client "+clientNum+":> Done with FM2: "+ fight1.getName()+" VS "+fight2.getName()+"\n\n");
             }
             //If the person in the loser's bracket wins the first finals match
