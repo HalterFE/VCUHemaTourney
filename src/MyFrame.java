@@ -90,7 +90,7 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
     }
 
     public static void main(String[] args) {
-        new MyFrame(0);
+        new MyFrame(1);
     }
 
     public void changedUpdate(DocumentEvent d) {
@@ -187,8 +187,8 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         //if both redPoints and bluePoints have a point value
         if(source==redChange||source==blueChange){
             try{
-                Integer.parseInt(redChange.getText());
-                Integer.parseInt(blueChange.getText());
+                newRedPointTotal = Integer.parseInt(redChange.getText());
+                newBluePointTotal = Integer.parseInt(blueChange.getText());
                 submitFightButtonC.setEnabled(true);
             }
             catch (NumberFormatException f) {
@@ -245,6 +245,8 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
                 redPointTotal = redPointTotal + Integer.parseInt(redPoints.getText());
                 newRedPointTotal = redPointTotal;
                 newBluePointTotal = bluePointTotal;
+                redChange.setText(""+newRedPointTotal);
+                blueChange.setText(""+newBluePointTotal);
                 currRound++;
                 redPointTotalLabel.setText("Total: "+redPointTotal);
                 bluePointTotalLabel.setText("Total: "+bluePointTotal);
@@ -359,7 +361,6 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         return FinalS;
     }
     //Returns a JPanel that serves as a screen for displaying who won the tournament for the server
-
     public JPanel makeFinalClient(){
         JPanel FinalC = new JPanel();
         FinalC.setBounds(0, 0, 586, 412);
@@ -401,7 +402,7 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         battleProgressLabel = new JLabel(numCompletedBattles + "/" + numBattles);
         battleProgressLabel.setFont(new Font("JetBrains Mono", Font.BOLD, 20));
         battleProgressLabel.setForeground(Color.yellow);
-        battleProgressLabel.setBounds(115, 205, 50, 20);
+        battleProgressLabel.setBounds(115, 205, 150, 70);
         //displays data about what battles are done or not
 
         DEConsole = new JTextArea("Server :> Running Dual Elim Protocol\n\n");
@@ -411,11 +412,20 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         DEConsole.setBounds(255, 10, 321, 392);
         DEConsole.setBorder(border);
         DEConsole.setEditable(false);
+
+        JScrollPane sp = new JScrollPane(DEConsole,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        sp.setFont(new Font("JetBrains", Font.BOLD, 15));
+        sp.setForeground(Color.yellow);
+        sp.setBackground(Color.black);
+        sp.setBounds(255, 10, 321, 392);
+        sp.setBorder(border);
         //console that displays client activity in regards to battles
 
         DualElimS.add(battleLabel);
         DualElimS.add(battleProgressLabel);
-        DualElimS.add(DEConsole);
+        DualElimS.add(sp);
 
         return DualElimS;
     }
@@ -448,7 +458,6 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         return ContinueS;
     }
     //returns a JPanel that serves as the break screen between running the Round Robin and Dual Elim sections
-
     public JPanel makeContinueClient(){
         JPanel FinalC = new JPanel();
         FinalC.setBounds(0, 0, 586, 412);
@@ -489,18 +498,27 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         poolProgressLabel.setBounds(115, 205, 50, 20);
         //displays data about what pools are done or not
 
-        RRConsole = new JTextArea("Server :> Running Round Robin Protocol\n\n");
+        RRConsole = new JTextArea("Server :> Running RR Protocol\n\n");
         RRConsole.setFont(new Font("JetBrains", Font.BOLD, 15));
         RRConsole.setForeground(Color.yellow);
         RRConsole.setBackground(Color.black);
         RRConsole.setBounds(255, 10, 321, 392);
         RRConsole.setBorder(border);
         RRConsole.setEditable(false);
+
+        JScrollPane sp = new JScrollPane(RRConsole,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        sp.setFont(new Font("JetBrains", Font.BOLD, 15));
+        sp.setForeground(Color.yellow);
+        sp.setBackground(Color.black);
+        sp.setBounds(255, 10, 321, 392);
+        sp.setBorder(border);
         //console that displays client activity in regards to pool
 
         RoundRobinS.add(poolLabel);
         RoundRobinS.add(poolProgressLabel);
-        RoundRobinS.add(RRConsole);
+        RoundRobinS.add(sp);
         return RoundRobinS;
     }
     //returns a JPanel that serves as the screen for running round robins for the server
@@ -608,7 +626,6 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         return FightScreenC;
     }
     //returns a JPanel that displays the current round being fought in a pool or during dual elims
-
     public JPanel makeFightScreenConfirmClient(){
         JPanel FightScreenConfirmC = new JPanel();
         FightScreenConfirmC.setBounds(0, 0, 586, 412);
@@ -785,7 +802,6 @@ public class MyFrame extends JFrame implements ActionListener, DocumentListener{
         return StartS;
     }
     //returns a JPanel that serves as the start screen for the server
-
     public JPanel makeStartScreenClient(){
         JPanel StartC = new JPanel();
         StartC.setBounds(0, 0, 586, 412);

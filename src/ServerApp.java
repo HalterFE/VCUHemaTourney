@@ -20,7 +20,7 @@ public class ServerApp extends Thread{
         String fileDirectory;
         ArrayList<Fighter> fighterList = new ArrayList<>();
 
-        MyFrame frame = new MyFrame();
+        MyFrame frame = new MyFrame(1);
 
         while(!frame.getStartMenuDone()){
             System.out.print("");

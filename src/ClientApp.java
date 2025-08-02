@@ -93,10 +93,12 @@ public class ClientApp{
                 //waits for user to decide if final scores are correct
 
                 if(frameC.getNewRedPointTotal() > frameC.getNewBluePointTotal()){
-                    currMatch.setWinner(currMatch.getFight1());
+                    currMatch.setWinner(1);
+                    //objOut.writeObject(currMatch.getFight1());
                 }
                 else{
-                    currMatch.setWinner(currMatch.getFight2());
+                    currMatch.setWinner(2);
+                    //objOut.writeObject(currMatch.getFight2());
                 }
 
                 frameC.currPoolDoneC = false;

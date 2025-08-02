@@ -3,6 +3,16 @@ import java.io.Serializable;
 public class DoubleElimMatch implements Serializable{
     public Fighter fight1, fight2, winner;
 
+    public int getRounds() {
+        return rounds;
+    }
+
+    public void setRounds(int rounds) {
+        this.rounds = rounds;
+    }
+
+    public int rounds;
+
     public Fighter getFight1() {
         return fight1;
     }
@@ -23,13 +33,19 @@ public class DoubleElimMatch implements Serializable{
         return winner;
     }
 
-    public void setWinner(Fighter winner) {
-        this.winner = winner;
+    public void setWinner(int i) {
+        if(i==1) {
+            this.winner = this.fight1;
+        }
+        else{
+            this.winner = this.fight2;
+        }
     }
 
-    public DoubleElimMatch(Fighter fight1, Fighter fight2){
+    public DoubleElimMatch(Fighter fight1, Fighter fight2, int rounds){
         this.fight1 = fight1;
         this.fight2 = fight2;
-        winner = null; //before a match's winner is determined
+        this.winner = null; //before a match's winner is determined
+        this.rounds = rounds;
     }
 }

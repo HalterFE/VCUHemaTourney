@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class ConnectedClient{
+public class ConnectedClient {
     private Socket clientSocket;
     private DataOutputStream dataOut;
     private DataInputStream dataIn;
@@ -26,7 +26,7 @@ public class ConnectedClient{
     private ArrayList<Fighter> tempWinner;
     private ArrayList<Fighter> tempLoser;
 
-    public ConnectedClient(Socket clientSocket, int clientNum){
+    public ConnectedClient(Socket clientSocket, int clientNum) {
         this.clientSocket = clientSocket;
         this.clientNum = clientNum;
         try {
@@ -34,22 +34,20 @@ public class ConnectedClient{
             this.dataIn = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
             this.objInput = new ObjectInputStream(clientSocket.getInputStream());
             this.objOutput = new ObjectOutputStream(clientSocket.getOutputStream());
-        }
-        catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void roundRobin(Pool[] pools, int numPools, int numDualElimFighters, Socket sock, int numRoundsDE, MyFrame frame) throws IOException{
-        if(runStatus == 1) {
+    public void roundRobin(Pool[] pools, int numPools, int numDualElimFighters, Socket sock, int numRoundsDE, MyFrame frame) throws IOException {
+        if (runStatus == 1) {
             frame.screen.next(frame.parentPanel);
             tempCompletedFighters = new ArrayList<Fighter>();
             completedFighters = new ArrayList<Fighter>();
             objOutput.writeObject(new DoubleElimMatch(new Fighter("bugaboo", -5, -5, -5), new Fighter("bugaboo", -5, -5, -5), -1));
             try {
                 Fighter DUMMY = (Fighter) objInput.readObject(); //Just to confirm that the client got the data before progressing
-            }
-            catch(ClassNotFoundException e) {
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
             frame.setNumPools(numPools);
@@ -62,13 +60,13 @@ public class ConnectedClient{
                 frame.numPools = numPools;
                 pools[tempRR].setStatus(1);
                 objOutput.writeObject(pools[tempRR]);
-                frame.RRConsole.append("Client "+clientNum+":> Handling pool number: "+ (pools[tempRR].getNumber())+"\n\n");
+                frame.RRConsole.append("Client " + clientNum + ":> Handling pool number: " + (pools[tempRR].getNumber()) + "\n\n");
                 try {
                     Pool blablabla = (Pool) objInput.readObject();
                     completedFighters.addAll(blablabla.getFighterList());
 
                     pools[tempRR].setStatus(2);
-                    frame.RRConsole.append("Client "+clientNum+":> Done with pool number: "+ (pools[tempRR].getNumber())+"\n\n");
+                    frame.RRConsole.append("Client " + clientNum + ":> Done with pool number: " + (pools[tempRR].getNumber()) + "\n\n");
                     completedRRs++;
                     frame.numCompletedPools++;
                     frame.poolProgressLabel.setText(frame.numCompletedPools + "/" + frame.numPools);
@@ -78,15 +76,15 @@ public class ConnectedClient{
             }
             for (int i = 0; i < numPools; i++) {
                 if (pools[i].getStatus() < 2) {
-                    frame.numCompletedPools = i+1;
+                    frame.numCompletedPools = i + 1;
                     pools[i].setStatus(1);
                     objOutput.writeObject(pools[i]);
-                    frame.RRConsole.append("Client "+clientNum+":> Handling pool number: "+ (i + 1)+"\n\n");
+                    frame.RRConsole.append("Client " + clientNum + ":> Handling pool number: " + (i + 1) + "\n\n");
                     try {
                         Pool blablabla = (Pool) objInput.readObject();
                         completedFighters.addAll(blablabla.getFighterList());
                         pools[i].setStatus(2);
-                        frame.RRConsole.append("Client "+clientNum+":> Done with pool number: "+ (i+1)+"\n\n");
+                        frame.RRConsole.append("Client " + clientNum + ":> Done with pool number: " + (i + 1) + "\n\n");
                         frame.poolProgressLabel.setText(frame.numCompletedPools + "/" + frame.numPools);
                     } catch (ClassNotFoundException e) {
                         e.printStackTrace();
@@ -116,37 +114,35 @@ public class ConnectedClient{
             frame.setNumTiebreak(numOfLastPlaceBeforeCutoff);
 
             int cutoffSwitch = -1;
-            if(numOfLastPlacePeople - numOfLastPlaceBeforeCutoff != 0){
+            if (numOfLastPlacePeople - numOfLastPlaceBeforeCutoff != 0) {
                 frame.remakeServerContinue();
-                for(int i = 0; i < completedFighters.size(); i++){
-                    if(completedFighters.get(i).getPoints() == lastPlacePoints){
+                for (int i = 0; i < completedFighters.size(); i++) {
+                    if (completedFighters.get(i).getPoints() == lastPlacePoints) {
                         cutoffSwitch = i;
 
                         JPanel addPanel = new JPanel();
                         addPanel.setBackground(Color.black);
-                        addPanel.setPreferredSize(new Dimension(281,30));
+                        addPanel.setPreferredSize(new Dimension(281, 30));
                         addPanel.setMaximumSize(addPanel.getPreferredSize());
                         addPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
                         JLabel nameFighterLabel = new JLabel();
                         nameFighterLabel.setForeground(Color.yellow);
                         JCheckBox check = new JCheckBox();
-                        check.addItemListener(new ItemListener(){
+                        check.addItemListener(new ItemListener() {
 
-                            public void itemStateChanged(ItemEvent i){
-                                if(i.getStateChange()==ItemEvent.SELECTED){
+                            public void itemStateChanged(ItemEvent i) {
+                                if (i.getStateChange() == ItemEvent.SELECTED) {
                                     frame.increaseNumCurrSelectedTiebreak();
-                                    frame.currSelectLabel.setText(frame.numCurrSelectedTiebreak+"/"+frame.numTiebreak);
-                                }
-                                else{
+                                    frame.currSelectLabel.setText(frame.numCurrSelectedTiebreak + "/" + frame.numTiebreak);
+                                } else {
                                     frame.decreaseNumCurrSelectedTiebreak();
-                                    frame.currSelectLabel.setText(frame.numCurrSelectedTiebreak+"/"+frame.numTiebreak);
+                                    frame.currSelectLabel.setText(frame.numCurrSelectedTiebreak + "/" + frame.numTiebreak);
                                 }
                                 //keeps track of the number of checkboxes... checked
 
-                                if(frame.numTiebreak == frame.numCurrSelectedTiebreak){
+                                if (frame.numTiebreak == frame.numCurrSelectedTiebreak) {
                                     frame.startDualElimButton.setEnabled(true);
-                                }
-                                else{
+                                } else {
                                     frame.startDualElimButton.setEnabled(false);
                                 }
                                 //if enough people selected, allow user to continue
@@ -160,7 +156,7 @@ public class ConnectedClient{
                         frame.tiebreakPanel.add(addPanel);
                     }
                     //puts Fighters in a format to be selected if they need to be placed in a tiebreaker and sends it to the front end
-                    if(cutoffSwitch<0){
+                    if (cutoffSwitch < 0) {
                         tempCompletedFighters.add(completedFighters.get(i));
                     }
                     //puts fighters, who aren't in tiebreaker at the very beginning of the list, in a temporary place
@@ -168,12 +164,12 @@ public class ConnectedClient{
             }
             frame.screen.next(frame.parentPanel);
 
-            while(!frame.getStartDualElim()){
+            while (!frame.getStartDualElim()) {
                 System.out.print("");
             }
             //waits for the server to continue the program
 
-            if(numOfLastPlacePeople - numOfLastPlaceBeforeCutoff != 0) {
+            if (numOfLastPlacePeople - numOfLastPlaceBeforeCutoff != 0) {
                 Component[] tiebreakPanels = frame.tiebreakPanel.getComponents();
                 ArrayList<Fighter> didNotMakeIt = new ArrayList<Fighter>();
                 for (Component c : tiebreakPanels) {
@@ -211,7 +207,7 @@ public class ConnectedClient{
                 //header of the point list
 
                 int count = 0;
-                for (Fighter fighter: completedFighters) {
+                for (Fighter fighter : completedFighters) {
                     writer.write("\n" + fighter.getName() + "   ||   " + fighter.getPoints());
                     count++;
                     if (count == numDualElimFighters) {
@@ -223,8 +219,7 @@ public class ConnectedClient{
 
                 writer.write("\n*--------------------**--------------------*");
                 writer.close();
-            }
-            catch(IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
             //takes data from the list of completed fighters and orders them in descending order
@@ -233,8 +228,7 @@ public class ConnectedClient{
             objOutput.writeObject(new Pool(new ArrayList<Fighter>(), -7, -7));
             //tells the client to stop running round robin stuff
 
-        }
-        else{
+        } else {
             ArrayList<Fighter> returner = new ArrayList<Fighter>(completedFighters.subList(0, numDualElimFighters));
             StartDoubleElim(returner, frame, numRoundsDE);
             //sends all fighters over that made it to elims
@@ -244,35 +238,35 @@ public class ConnectedClient{
     }
     //the server-side aspect of the round robin stuff
 
-    public void StartDoubleElim(ArrayList<Fighter> fighterList, MyFrame frame, int numRoundsDE){
+    public void StartDoubleElim(ArrayList<Fighter> fighterList, MyFrame frame, int numRoundsDE) {
         tempWinner = new ArrayList<>();
         tempLoser = new ArrayList<>();
         winnersBracket = InitializeBracket(fighterList, numRoundsDE);
         frame.screen.next(frame.parentPanel);
 
-        while(winnersBracket.size()>1){
-            runWinners(frame);
+        while (winnersBracket.get(0).getFight2() != null) {
+            tempWinner = runWinners(frame);
             winnersBracket = InitializeBracket(tempWinner, numRoundsDE);
         }
         //runs until the winner's bracket is over
 
         losersBracket = InitializeBracket(tempLoser, numRoundsDE);
 
-        while(losersBracket.size()>1){
-            runLosers(frame);
+        while (losersBracket.get(0).getFight2() != null) {
+            tempLoser = runLosers(frame);
             losersBracket = InitializeBracket(tempLoser, numRoundsDE);
         }
         //runs until the loser's bracket is over
 
-        finalMatch(winnersBracket.get(0).getFight1(), losersBracket.get(0).getFight1(),frame,numRoundsDE);
+        finalMatch(winnersBracket.get(0).getFight1(), losersBracket.get(0).getFight1(), frame, numRoundsDE);
     }
     //Server-side Double Elim Process
 
-    public ArrayList<DoubleElimMatch> InitializeBracket(ArrayList<Fighter> fighterList, int numRoundsDE){
+    public ArrayList<DoubleElimMatch> InitializeBracket(ArrayList<Fighter> fighterList, int numRoundsDE) {
         ArrayList<DoubleElimMatch> matchList = new ArrayList<DoubleElimMatch>();
-        for(int i = 0; i<fighterList.size();i+=2){
-            if(i+1 == fighterList.size()){
-                matchList.add(new DoubleElimMatch(fighterList.get(i),null, 0));
+        for (int i = 0; i < fighterList.size(); i += 2) {
+            if (i + 1 == fighterList.size()) {
+                matchList.add(new DoubleElimMatch(fighterList.get(i), null, 0));
             }
             //handles cases where the current part of the tournament doesn't have even participants
             else {
@@ -284,7 +278,7 @@ public class ConnectedClient{
     }
     //Returns an arraylist of matches for every fighter given in the fighterList. This is just one round of matches
 
-    public void runWinners(MyFrame frame){
+    public ArrayList<Fighter> runWinners(MyFrame frame) {
         try {
             tempWinner = new ArrayList<>();
             for (DoubleElimMatch match : winnersBracket) {
@@ -292,30 +286,32 @@ public class ConnectedClient{
                     tempWinner.add(match.getFight1());
                 } else {
                     objOutput.writeObject(match);
-                    frame.DEConsole.append("Client "+clientNum+":> Handling WB: "+match.getFight1().getName()+" VS "+match.getFight2().getName()+"\n\n");
+                    frame.DEConsole.append("Client " + clientNum + ":> Handling WB: " + match.getFight1().getName() + " VS " + match.getFight2().getName() + "\n\n");
                     DoubleElimMatch finishedMatch = (DoubleElimMatch) objInput.readObject(); //WHEN DATA IS SENT FROM CLIENT
-                    frame.DEConsole.append("Client "+clientNum+":> Done with WB: "+ match.getFight1().getName()+" VS "+match.getFight2().getName()+"\n\n");
+                    frame.DEConsole.append("Client " + clientNum + ":> Done with WB: " + match.getFight1().getName() + " VS " + match.getFight2().getName() + "\n\n");
                     frame.numCompletedBattles++;
                     frame.battleProgressLabel.setText(frame.numCompletedBattles + "/" + frame.numBattles);
 
-                    if (match.getWinner() == match.getFight1()) {
+                    if (finishedMatch.getWinner() == finishedMatch.getFight1()) {
                         tempWinner.add(match.getFight1());
+                        System.out.println("Winner: " + finishedMatch.getWinner().getName());
                         tempLoser.add(match.getFight2());
                     } else {
                         tempWinner.add(match.getFight2());
+                        System.out.println("Winner: " + finishedMatch.getWinner().getName());
                         tempLoser.add(match.getFight1());
                     }
                 }
             }
-        } catch(IOException e){
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        catch(ClassNotFoundException e){
-            e.printStackTrace();
-        }
+        return tempWinner;
     }//sends match data to the client to run individual matches, match data sent back is then used
 
-    public void runLosers(MyFrame frame){
+    public ArrayList<Fighter> runLosers(MyFrame frame) {
         tempLoser = new ArrayList<>();
         try {
             for (DoubleElimMatch match : losersBracket) {
@@ -323,73 +319,75 @@ public class ConnectedClient{
                     tempLoser.add(match.getFight1());
                 } else {
                     objOutput.writeObject(match);
-                    frame.DEConsole.append("Client "+clientNum+":> Handling LB: "+match.getFight1().getName()+" VS "+match.getFight2().getName()+"\n\n");
+                    frame.DEConsole.append("Client " + clientNum + ":> Handling LB: " + match.getFight1().getName() + " VS " + match.getFight2().getName() + "\n\n");
                     DoubleElimMatch finishedMatch = (DoubleElimMatch) objInput.readObject(); //WHEN DATA IS SENT FROM CLIENT
-                    frame.DEConsole.append("Client "+clientNum+":> Done with LB: "+ match.getFight1().getName()+" VS "+match.getFight2().getName()+"\n\n");
+                    frame.DEConsole.append("Client " + clientNum + ":> Done with LB: " + match.getFight1().getName() + " VS " + match.getFight2().getName() + "\n\n");
                     frame.numCompletedBattles++;
                     frame.battleProgressLabel.setText(frame.numCompletedBattles + "/" + frame.numBattles);
 
-                    if (match.getWinner() == match.getFight1()) {
+                    if (finishedMatch.getWinner() == finishedMatch.getFight1()) {
                         tempLoser.add(match.getFight1());
+                        System.out.println("Winner: " + finishedMatch.getWinner().getName());
                     } else {
                         tempLoser.add(match.getFight2());
+                        System.out.println("Winner: " + finishedMatch.getWinner().getName());
                     }
                 }
             }
-        }catch(IOException e){
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        catch(ClassNotFoundException e){
-            e.printStackTrace();
-        }
+        return tempLoser;
     } //sends match data to the client to run individual matches, match data sent back is then used, this time losers are OBLITERATED
 
-    public void finalMatch(Fighter fight1, Fighter fight2, MyFrame frame, int numRoundsDE){
+    public void finalMatch(Fighter fight1, Fighter fight2, MyFrame frame, int numRoundsDE) {
         frame.battleLabel.setText("Final Match 1:");
-        frame.battleProgressLabel.setText(fight1.getName()+" VS"+ fight2.getName());
-        Fighter champion;
+        frame.battleProgressLabel.setText("<html>" + fight1.getName() + " <br>VS<br>" + fight2.getName() + "</html>");
+        DoubleElimMatch finalBattle = new DoubleElimMatch(fight1, fight2, numRoundsDE);
         try {
-            objOutput.writeObject(new DoubleElimMatch(fight1, fight2, numRoundsDE));
-            frame.DEConsole.append("Client "+clientNum+":> Handling FM: "+fight1.getName()+" VS "+fight2.getName()+"\n\n");
-            champion = ((DoubleElimMatch) objInput.readObject()).getWinner();
-            frame.DEConsole.append("Client "+clientNum+":> Done with FM: "+fight1.getName()+" VS "+fight2.getName()+"\n\n");
-            if(champion == fight2){
+            objOutput.writeObject(finalBattle);
+            frame.DEConsole.append("Client " + clientNum + ":> Handling FM: " + fight1.getName() + " VS " + fight2.getName() + "\n\n");
+            finalBattle = (DoubleElimMatch) objInput.readObject();
+            frame.DEConsole.append("Client " + clientNum + ":> Done with FM: " + fight1.getName() + " VS " + fight2.getName() + "\n\n");
+
+            if (finalBattle.getWinner()==finalBattle.getFight2()) {
                 frame.battleLabel.setText("Final Match 2:");
-                objOutput.writeObject(new DoubleElimMatch(fight1, fight2, numRoundsDE));
-                frame.DEConsole.append("Client "+clientNum+":> Handling FM2: "+fight1.getName()+" VS "+fight2.getName()+"\n\n");
-                DoubleElimMatch tempChamp = (DoubleElimMatch) objInput.readObject();
-                champion = tempChamp.getWinner();
-                frame.DEConsole.append("Client "+clientNum+":> Done with FM2: "+ fight1.getName()+" VS "+fight2.getName()+"\n\n");
+                objOutput.writeObject(finalBattle);
+                frame.DEConsole.append("Client " + clientNum + ":> Handling FM2: " + fight1.getName() + " VS " + fight2.getName() + "\n\n");
+                finalBattle = (DoubleElimMatch) objInput.readObject();
+                frame.finalWinner.setText("The Champion is: " + finalBattle.getWinner().getName());
+                frame.DEConsole.append("Client " + clientNum + ":> Done with FM2: " + fight1.getName() + " VS " + fight2.getName() + "\n\n");
             }
             //If the person in the loser's bracket wins the first finals match
 
-            frame.finalWinner.setText("The Champion is: "+champion.getName());
+            frame.finalWinner.setText("The Champion is: " + finalBattle.getWinner().getName());
             frame.screen.next(frame.parentPanel);
 
-        } catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
-        } catch(ClassNotFoundException e){
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
     //the final match for the tournament... to be sent to the client lol
 
-    public void close(){
+    public void close() {
         try {
             clientSocket.close();
             dataOut.close();
             objInput.close();
             objOutput.close();
-        }
-        catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
     //for disconnecting the client from the server
 
-    public int getIndexOfName(String name){
-        for(int i = 0; i<completedFighters.size(); i++){
-            if(completedFighters.get(i).getName().equals(name)){
+    public int getIndexOfName(String name) {
+        for (int i = 0; i < completedFighters.size(); i++) {
+            if (completedFighters.get(i).getName().equals(name)) {
                 return i;
             }
         }
